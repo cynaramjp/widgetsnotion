@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Widget</title>
+    <!-- Carrega o TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte padrão como Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Um fundo suave para o modo de tela cheia, caso não esteja no Notion */
+            background-color: #f0f2f5;
+        }
+        /* Ajuste para o embed do Notion não ter fundo */
+        html, body {
+            background-color: transparent !important;
+            overflow: hidden; /* Evita barras de rolagem no widget */
+        }
+        /* Esconde as setas do input de número */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen antialiased">
+
+    <!-- Container Principal do Widget -->
+    <div class="w-full max-w-xs mx-auto p-6 bg-white rounded-2xl shadow-xl relative overflow-hidden">
+
+        <!-- Tela de Confirmação (Mensagem Fofa) -->
+        <div id="message-view" class="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4 z-20 hidden">
+            <div class="text-5xl mb-4">🎉</div>
+            <h2 class="text-xl font-bold text-gray-800">Mandou bem!</h2>
+            <p class="text-gray-600 mt-1">Hora de uma pausa. 💖</p>
+            <button id="close-message-btn" class="mt-6 bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-600 transition-colors">
+                Fechar
+            </button>
+        </div>
+
+        <!-- Canvas para Confetes -->
+        <canvas id="confetti-canvas" class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none"></canvas>
+
+        <!-- Tela de Configuração (View 1) -->
+        <div id="setting-view">
+            <h2 class="text-center text-lg font-semibold text-gray-700 mb-4">Definir Timer</h2>
+            <div class="flex items-center justify-center space-x-2">
+                <input type="number" id="minutes-input" placeholder="00" min="0" class="w-24 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
+                <span class="text-3xl font-bold text-gray-400 pb-2">:</span>
+                <input type="number" id="seconds-input" placeholder="00" min="0" max="59" class="w-24 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
+            </div>
+             <div class="text-center text-xs text-gray-400 mt-1 mb-5">
+                <span>Minutos</span>
+                <span class="ml-14">Segundos</span>
+            </div>
+            <button id="start-btn" class="w-full bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/30">
+                Iniciar
+            </button>
+        </div>
+
+        <!-- Tela do Timer (View 2) -->
+        <div id="timer-view" class="hidden">
+            <!-- Display do Tempo -->
+            <div id="time-display" class="text-center text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 py-4">
+                00:00
+            </div>
+
+            <!-- Controles -->
+            <div class="flex justify-center space-x-4 mt-4">
+                <!-- Botão Voltar/Configurar -->
+                <button id="back-btn" title="Voltar" class="w-16 h-16 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </button>
+                
+                <!-- Botão Start/Pause -->
+                <button id="start-pause-btn" class="w-16 h-16 flex items-center justify-center bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-500/50">
+                    <!-- Ícone Play -->
+                    <svg id="play-icon" class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                    <!-- Ícone Pause (escondido) -->
+                    <svg id="pause-icon" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h1a1 1 0 001-1V8a1 1 0 00-1-1H8zm5 0a1 1 0 00-1 1v4a1 1 0 001 1h1a1 1 0 001-1V8a1 1 0 00-1-1h-1z" clip-rule="evenodd"></path></svg>
+                </button>
+                
+                <!-- Botão Resetar -->
+                <button id="reset-btn" title="Resetar" class="w-16 h-16 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.357-2A8.001 8.001 0 0019.418 15m0 0H15"></path></svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Referências do DOM ---
+        const settingView = document.getElementById('setting-view');
+        const timerView = document.getElementById('timer-view');
+        const messageView = document.getElementById('message-view');
+        
+        const minutesInput = document.getElementById('minutes-input');
+        const secondsInput = document.getElementById('seconds-input');
+        
+        const startBtn = document.getElementById('start-btn');
+        const backBtn = document.getElementById('back-btn');
+        const startPauseBtn = document.getElementById('start-pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const closeMessageBtn = document.getElementById('close-message-btn');
+        
+        const timeDisplay = document.getElementById('time-display');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Estado do Timer ---
+        let totalSeconds = 0;
+        let secondsRemaining = 0;
+        let timerId = null;
+        let isRunning = false;
+        let confettiAnimationId = null;
+        let audioCtx; // <-- Adicionado para o som
+
+        // --- Funções de Áudio ---
+        function getAudioContext() {
+            if (!audioCtx) {
+                try {
+                    // Tenta criar o AudioContext
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn("AudioContext não é suportado por este navegador.");
+                }
+            }
+            return audioCtx;
+        }
+
+        function playBeep() {
+            const ctx = getAudioContext();
+            if (!ctx) return; // Não faz nada se o áudio não for suportado
+
+            try {
+                // --- Som 1 (Tom mais baixo) ---
+                const oscillator1 = ctx.createOscillator();
+                const gainNode1 = ctx.createGain();
+                
+                oscillator1.type = 'sine'; // Onda suave
+                oscillator1.frequency.setValueAtTime(523, ctx.currentTime); // Tom (Dó)
+                gainNode1.gain.setValueAtTime(0.3, ctx.currentTime); // Volume inicial (mais baixo)
+                
+                // Fade out suave
+                gainNode1.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(ctx.destination);
+                
+                oscillator1.start(ctx.currentTime);
+                oscillator1.stop(ctx.currentTime + 0.3); // Duração de 300ms
+
+                // --- Som 2 (Tom mais alto, um pouco depois) ---
+                setTimeout(() => {
+                    const oscillator2 = ctx.createOscillator();
+                    const gainNode2 = ctx.createGain();
+                    
+                    oscillator2.type = 'sine';
+                    oscillator2.frequency.setValueAtTime(659, ctx.currentTime); // Tom (Mi)
+                    gainNode2.gain.setValueAtTime(0.3, ctx.currentTime);
+                    
+                    // Fade out suave
+                    gainNode2.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(ctx.destination);
+                    
+                    oscillator2.start(ctx.currentTime);
+                    oscillator2.stop(ctx.currentTime + 0.3);
+                }, 150); // Toca o segundo som 150ms após o início do primeiro
+
+            } catch (e) {
+                console.error("Erro ao tocar o bipe:", e);
+            }
+        }
+
+
+        // --- Funções Auxiliares ---
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = seconds % 60;
+            return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function updateDisplay() {
+            timeDisplay.textContent = formatTime(secondsRemaining);
+        }
+
+        function showView(viewName) {
+            settingView.classList.add('hidden');
+            timerView.classList.add('hidden');
+            
+            if (viewName === 'setting') {
+                settingView.classList.remove('hidden');
+            } else if (viewName === 'timer') {
+                timerView.classList.remove('hidden');
+            }
+        }
+
+        function updateIcons() {
+            if (isRunning) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        // --- Lógica do Timer ---
+        function startTimer() {
+            const minutes = parseInt(minutesInput.value || 0, 10);
+            const seconds = parseInt(secondsInput.value || 0, 10);
+            
+            totalSeconds = (minutes * 60) + seconds;
+            
+            if (totalSeconds <= 0) {
+                // Adiciona um feedback se o tempo for inválido
+                minutesInput.classList.add('border-red-500');
+                secondsInput.classList.add('border-red-500');
+                setTimeout(() => {
+                    minutesInput.classList.remove('border-red-500');
+                    secondsInput.classList.remove('border-red-500');
+                }, 1000);
+                return;
+            }
+
+            secondsRemaining = totalSeconds;
+            updateDisplay();
+            showView('timer');
+            // Inicia pausado por padrão, o usuário clica em play
+            isRunning = false;
+            updateIcons();
+        }
+
+        function pauseTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            isRunning = false;
+            updateIcons();
+        }
+
+        function resumeTimer() {
+            if (secondsRemaining <= 0) return;
+            
+            isRunning = true;
+            updateIcons();
+            
+            timerId = setInterval(() => {
+                secondsRemaining--;
+                updateDisplay();
+
+                if (secondsRemaining <= 0) {
+                    clearInterval(timerId);
+                    timerId = null;
+                    isRunning = false;
+                    updateIcons();
+                    showMessage();
+                    startConfetti();
+                    playBeep(); // <-- Toca o som aqui
+                }
+            }, 1000);
+        }
+
+        function handleStartPauseClick() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                resumeTimer();
+            }
+        }
+
+        function handleResetClick() {
+            pauseTimer();
+            secondsRemaining = totalSeconds;
+            updateDisplay();
+        }
+
+        function handleBackClick() {
+            pauseTimer();
+            secondsRemaining = 0;
+            totalSeconds = 0;
+            // Limpa os inputs
+            minutesInput.value = '';
+            secondsInput.value = '';
+            showView('setting');
+        }
+
+        function showMessage() {
+            messageView.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            messageView.classList.add('hidden');
+            stopConfetti();
+            handleBackClick(); // Volta para a tela de configuração
+        }
+
+        // --- Lógica dos Confetes ---
+        let particles = [];
+        const colors = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
+
+        function Particle(x, y, vx, vy, color) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.color = color;
+            this.size = Math.random() * 6 + 4; // Tamanho entre 4 e 10
+            this.opacity = 1;
+            this.life = 120; // Vida útil da partícula
+        }
+
+        Particle.prototype.draw = function() {
+            ctx.globalAlpha = this.opacity;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+            ctx.globalAlpha = 1;
+        };
+
+        Particle.prototype.update = function() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.1; // Gravidade
+            this.life--;
+            if (this.life < 30) {
+                this.opacity = this.life / 30; // Fade out
+            }
+            this.draw();
+        };
+
+        function createParticles() {
+            const W = canvas.width;
+            const H = canvas.height;
+            canvas.width = W;
+            canvas.height = H;
+            
+            particles = [];
+            for (let i = 0; i < 150; i++) {
+                particles.push(new Particle(
+                    Math.random() * W, // X
+                    -10 - Math.random() * 20, // Y (começa acima da tela)
+                    Math.random() * 10 - 5, // VX
+                    Math.random() * 5 + 2, // VY
+                    colors[Math.floor(Math.random() * colors.length)]
+                ));
+            }
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.life > 0 && p.y < canvas.height);
+            
+            particles.forEach(p => p.update());
+
+            if (particles.length > 0) {
+                confettiAnimationId = requestAnimationFrame(animateConfetti);
+            } else {
+                stopConfetti();
+            }
+        }
+
+        function startConfetti() {
+            createParticles();
+            animateConfetti();
+        }
+        
+        function stopConfetti() {
+            if (confettiAnimationId) {
+                cancelAnimationFrame(confettiAnimationId);
+            }
+            particles = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', () => {
+            getAudioContext(); // Inicializa o áudio na primeira interação
+            startTimer();
+        });
+        startPauseBtn.addEventListener('click', () => {
+            getAudioContext(); // Garante que o áudio está pronto se o usuário pausar/continuar
+            handleStartPauseClick();
+        });
+        resetBtn.addEventListener('click', handleResetClick);
+        backBtn.addEventListener('click', handleBackClick);
+        closeMessageBtn.addEventListener('click', hideMessage);
+        
+        // Formata os inputs de tempo
+        function formatTimeInput(e) {
+            if (parseInt(e.target.value, 10) > 59 && e.target.id === 'seconds-input') {
+                e.target.value = '59';
+            }
+            if (parseInt(e.target.value, 10) < 0) {
+                 e.target.value = '0';
+            }
+            // Adiciona padding se for um dígito
+            if (e.target.value.length === 1) {
+                 e.target.value = String(e.target.value).padStart(2, '0');
+            }
+        }
+        
+        minutesInput.addEventListener('change', formatTimeInput);
+        secondsInput.addEventListener('change', formatTimeInput);
+
+    </script>
+</body>
+</html>
+
+
