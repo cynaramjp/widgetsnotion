@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widgets para Notion</title>
+    <!-- Carrega o TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100 antialiased">
+
+    <div class="text-center p-8 bg-white rounded-2xl shadow-xl max-w-lg mx-auto w-[90%]">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Meus Widgets para Notion</h1>
+        <p class="text-gray-600 mb-8">
+            Olá! Esta é minha coleção de widgets criados para usar no Notion.
+            Escolha um widget abaixo para abrir.
+        </p>
+        
+        <!-- Cartão do Widget de Timer -->
+        <div class="text-left p-6 border border-gray-200 rounded-lg bg-gray-50 hover:shadow-md transition-shadow">
+            <h2 class="text-xl font-bold text-indigo-700 mb-2">Timer Widget</h2>
+            <p class="text-gray-600 mb-5">
+                Um timer pomodoro/regressivo compacto e bonito, com confetes e alerta sonoro suave ao finalizar.
+            </p>
+            
+            <!-- 
+              O link agora aponta para o timer. O link do site que você deu (https://...) é o site GERAL,
+              e o href aqui deve ser o caminho RELATIVO para o arquivo do timer.
+            -->
+            <a href="./timer.html" 
+               class="inline-block bg-indigo-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/30 text-base">
+                Abrir Timer
+            </a>
+        </div>
+
+        <!-- Você pode adicionar mais widgets aqui no futuro -->
+        <!-- 
+        <div class="text-left p-6 border border-gray-200 rounded-lg bg-gray-50 hover:shadow-md transition-shadow mt-4">
+            <h2 class="text-xl font-bold text-gray-700 mb-2">Outro Widget (Em breve)</h2>
+            <p class="text-gray-500 mb-5">
+                Descrição do seu próximo widget...
+            </p>
+            <span class="inline-block bg-gray-300 text-gray-500 font-bold py-2 px-5 rounded-lg cursor-not-allowed text-base">
+                Em breve
+            </span>
+        </div>
+        -->
+        
+    </div>
+
+</body>
+</html>
+
