@@ -36,8 +36,8 @@
 <body class="flex items-center justify-center min-h-screen antialiased">
 
     <!-- Container Principal do Widget -->
-    <!-- MUDANÇA: 'max-w-xs' (320px) e 'p-6' (24px) alterados para 'w-60' (240px) e 'p-4' (16px) -->
-    <div class="w-60 mx-auto p-4 bg-white rounded-2xl shadow-xl relative overflow-hidden">
+    <!-- MUDANÇA: 'w-60' (240px) e 'p-4' (16px) alterados para 'w-[200px]' e 'p-3' (12px) -->
+    <div class="w-[200px] mx-auto p-3 bg-white rounded-2xl shadow-xl relative overflow-hidden">
 
         <!-- Tela de Confirmação (Mensagem Fofa) -->
         <div id="message-view" class="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4 z-20 hidden">
@@ -56,16 +56,16 @@
         <div id="setting-view">
             <h2 class="text-center text-lg font-semibold text-gray-700 mb-4">Definir Timer</h2>
             <div class="flex items-center justify-center space-x-2">
-                <!-- MUDANÇA: 'w-24' (96px) alterado para 'w-20' (80px) -->
-                <input type="number" id="minutes-input" placeholder="00" min="0" class="w-20 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
+                <!-- MUDANÇA: 'w-20' (80px) alterado para 'w-16' (64px) -->
+                <input type="number" id="minutes-input" placeholder="00" min="0" class="w-16 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
                 <span class="text-3xl font-bold text-gray-400 pb-2">:</span>
-                <!-- MUDANÇA: 'w-24' (96px) alterado para 'w-20' (80px) -->
-                <input type="number" id="seconds-input" placeholder="00" min="0" max="59" class="w-20 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
+                <!-- MUDANÇA: 'w-20' (80px) alterado para 'w-16' (64px) -->
+                <input type="number" id="seconds-input" placeholder="00" min="0" max="59" class="w-16 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
             </div>
-             <div class="text-center text-xs text-gray-400 mt-1 mb-5">
-                <span>Minutos</span>
-                <!-- MUDANÇA: 'ml-14' (56px) alterado para 'ml-12' (48px) para alinhar -->
-                <span class="ml-12">Segundos</span>
+             <!-- MUDANÇA: Refatorado para flexbox para alinhar com os inputs w-16 -->
+             <div class="flex justify-center text-xs text-gray-400 mt-1 mb-5 space-x-2">
+                <span class="w-16 text-center">Minutos</span>
+                <span class="w-16 text-center">Segundos</span>
             </div>
             <button id="start-btn" class="w-full bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/30">
                 Iniciar
@@ -75,8 +75,8 @@
         <!-- Tela do Timer (View 2) -->
         <div id="timer-view" class="hidden">
             <!-- Display do Tempo -->
-            <!-- MUDANÇA: 'text-7xl' (128px) alterado para 'text-6xl' (96px) para caber na largura -->
-            <div id="time-display" class="text-center text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 py-4">
+            <!-- MUDANÇA: 'text-6xl' alterado para 'text-5xl' para caber na largura -->
+            <div id="time-display" class="text-center text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 py-4">
                 00:00
             </div>
 
