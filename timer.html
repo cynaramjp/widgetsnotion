@@ -36,7 +36,8 @@
 <body class="flex items-center justify-center min-h-screen antialiased">
 
     <!-- Container Principal do Widget -->
-    <div class="w-full max-w-xs mx-auto p-6 bg-white rounded-2xl shadow-xl relative overflow-hidden">
+    <!-- MUDANÇA: 'max-w-xs' (320px) e 'p-6' (24px) alterados para 'w-60' (240px) e 'p-4' (16px) -->
+    <div class="w-60 mx-auto p-4 bg-white rounded-2xl shadow-xl relative overflow-hidden">
 
         <!-- Tela de Confirmação (Mensagem Fofa) -->
         <div id="message-view" class="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4 z-20 hidden">
@@ -55,13 +56,16 @@
         <div id="setting-view">
             <h2 class="text-center text-lg font-semibold text-gray-700 mb-4">Definir Timer</h2>
             <div class="flex items-center justify-center space-x-2">
-                <input type="number" id="minutes-input" placeholder="00" min="0" class="w-24 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
+                <!-- MUDANÇA: 'w-24' (96px) alterado para 'w-20' (80px) -->
+                <input type="number" id="minutes-input" placeholder="00" min="0" class="w-20 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
                 <span class="text-3xl font-bold text-gray-400 pb-2">:</span>
-                <input type="number" id="seconds-input" placeholder="00" min="0" max="59" class="w-24 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
+                <!-- MUDANÇA: 'w-24' (96px) alterado para 'w-20' (80px) -->
+                <input type="number" id="seconds-input" placeholder="00" min="0" max="59" class="w-20 text-4xl font-bold text-center p-2 border-b-2 border-gray-200 focus:border-indigo-500 outline-none transition-colors">
             </div>
              <div class="text-center text-xs text-gray-400 mt-1 mb-5">
                 <span>Minutos</span>
-                <span class="ml-14">Segundos</span>
+                <!-- MUDANÇA: 'ml-14' (56px) alterado para 'ml-12' (48px) para alinhar -->
+                <span class="ml-12">Segundos</span>
             </div>
             <button id="start-btn" class="w-full bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/30">
                 Iniciar
@@ -71,12 +75,20 @@
         <!-- Tela do Timer (View 2) -->
         <div id="timer-view" class="hidden">
             <!-- Display do Tempo -->
-            <div id="time-display" class="text-center text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 py-4">
+            <!-- MUDANÇA: 'text-7xl' (128px) alterado para 'text-6xl' (96px) para caber na largura -->
+            <div id="time-display" class="text-center text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600 py-4">
                 00:00
             </div>
 
             <!-- Controles -->
-            <div class="flex justify-center space-x-4 mt-4">
+            <!-- 
+              MUDANÇA AQUI:
+              - 'flex' mudou para 'flex-col' (empilhamento vertical)
+              - 'justify-center' mudou para 'items-center' (centralizar no eixo X)
+              - 'space-x-4' (espaço horizontal) mudou para 'space-y-4' (espaço vertical)
+              - 'mt-4' mudou para 'mt-6' (um pouco mais de espaço do topo)
+            -->
+            <div class="flex flex-col items-center space-y-4 mt-6">
                 <!-- Botão Voltar/Configurar -->
                 <button id="back-btn" title="Voltar" class="w-16 h-16 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -420,5 +432,3 @@
     </script>
 </body>
 </html>
-
-
