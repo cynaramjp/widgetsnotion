@@ -1,0 +1,22 @@
+{
+    "name": "Kawaii Focus",
+    "short_name": "KawaiiFocus",
+    "description": "Seu timer de produtividade mais fofo.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#f3e8ff",
+    "theme_color": "#f3e8ff",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/192/3063/3063822.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}
