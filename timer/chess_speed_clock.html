@@ -2,9 +2,19 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kawaii Focus Timer 🌸</title>
     
+    <!-- Configurações PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f3e8ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kawaii Focus">
+    
+    <!-- Ícone para Apple (iOS) -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3063/3063822.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -22,31 +32,16 @@
                         sans: ['Nunito', 'sans-serif'],
                     },
                     colors: {
-                        lilac: {
-                            50: '#fdf4ff',
-                            100: '#fae8ff',
-                            200: '#f0d0ff',
-                            300: '#e879f9',
-                            400: '#c084fc',
-                            500: '#a855f7',
-                        }
+                        lilac: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f0d0ff', 300: '#e879f9', 400: '#c084fc', 500: '#a855f7' }
                     },
                     animation: {
                         'bounce-slow': 'bounce 3s infinite',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'float': 'float 6s ease-in-out infinite',
                         'pop': 'pop 0.3s ease-out',
                     },
                     keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        },
-                        pop: {
-                            '0%': { transform: 'scale(0.9)' },
-                            '50%': { transform: 'scale(1.05)' },
-                            '100%': { transform: 'scale(1)' },
-                        }
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        pop: { '0%': { transform: 'scale(0.9)' }, '50%': { transform: 'scale(1.05)' }, '100%': { transform: 'scale(1)' } }
                     }
                 }
             }
@@ -58,21 +53,14 @@
             background-color: #f3e8ff;
             background-image: radial-gradient(#e9d5ff 1px, transparent 1px);
             background-size: 20px 20px;
+            /* Previne o pull-to-refresh no mobile que atrapalha apps */
+            overscroll-behavior-y: none; 
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f3e8ff; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #d8b4fe; 
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #c084fc; 
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f3e8ff; }
+        ::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c084fc; }
 
         .glass-panel {
             background: rgba(255, 255, 255, 0.85);
@@ -90,22 +78,8 @@
             box-shadow: 0 0 0 rgba(0,0,0,0);
         }
 
-        .chip-btn {
-            transition: all 0.2s ease;
-        }
-        .chip-btn:hover {
-            transform: translateY(-2px);
-        }
-        .chip-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .emoji-float {
-            position: absolute;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.6;
-        }
+        .chip-btn:active { transform: scale(0.95); }
+        .emoji-float { position: absolute; pointer-events: none; z-index: 0; opacity: 0.6; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 selection:bg-purple-200 selection:text-purple-900 text-slate-700">
@@ -128,8 +102,6 @@
 
         <!-- Área do Timer -->
         <div class="bg-white rounded-3xl p-5 shadow-inner border-4 border-purple-100 flex flex-col items-center gap-3 relative">
-            
-            <!-- Tags Predefinidas -->
             <div class="flex flex-wrap justify-center gap-2 w-full mb-1">
                 <button onclick="setTag('📚 Estudo')" class="chip-btn px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-600 text-xs font-bold rounded-xl border border-purple-200">📚 Estudo</button>
                 <button onclick="setTag('💼 Trabalho')" class="chip-btn px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs font-bold rounded-xl border border-blue-200">💼 Trabalho</button>
@@ -137,19 +109,16 @@
                 <button onclick="setTag('🎨 Criativo')" class="chip-btn px-3 py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-600 text-xs font-bold rounded-xl border border-pink-200">🎨 Criativo</button>
             </div>
 
-            <!-- Input -->
             <div class="w-full relative">
                 <input type="text" id="taskInput" 
                     class="w-full text-center bg-purple-50 border-2 border-purple-100 text-purple-700 placeholder-purple-300 text-lg font-semibold rounded-2xl py-3 px-4 focus:outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-200 transition-all"
                     placeholder="✨ O que estamos fazendo?">
             </div>
 
-            <!-- Display do Tempo -->
-            <div id="timerDisplay" class="text-7xl font-black text-purple-500 font-mono tracking-tighter tabular-nums drop-shadow-sm py-1 transition-colors duration-200">
+            <div id="timerDisplay" class="text-7xl font-black text-purple-500 font-mono tracking-tighter tabular-nums drop-shadow-sm py-1 transition-colors duration-200 select-none">
                 00:00:00
             </div>
 
-            <!-- Status -->
             <div id="statusText" class="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-full">
                 Aguardando início
             </div>
@@ -157,16 +126,14 @@
 
         <!-- Controles -->
         <div class="grid grid-cols-2 gap-4">
-            <!-- Botão Iniciar/Pausar -->
             <button id="startBtn" onclick="toggleTimer()" 
-                class="btn-kawaii col-span-1 bg-gradient-to-b from-purple-400 to-purple-500 hover:from-purple-300 hover:to-purple-400 text-white font-bold py-4 px-4 rounded-2xl text-lg flex items-center justify-center gap-2 shadow-purple-300">
+                class="btn-kawaii col-span-1 bg-gradient-to-b from-purple-400 to-purple-500 hover:from-purple-300 hover:to-purple-400 text-white font-bold py-4 px-4 rounded-2xl text-lg flex items-center justify-center gap-2 shadow-purple-300 select-none">
                 <span id="startBtnIcon"><i class="fa-solid fa-play"></i></span>
                 <span id="startBtnText">Iniciar</span>
             </button>
 
-            <!-- Botão Marcar/Próximo -->
             <button id="nextBtn" onclick="nextTask()" disabled
-                class="btn-kawaii col-span-1 bg-gradient-to-b from-pink-400 to-pink-500 hover:from-pink-300 hover:to-pink-400 text-white font-bold py-4 px-4 rounded-2xl text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale shadow-pink-300 group">
+                class="btn-kawaii col-span-1 bg-gradient-to-b from-pink-400 to-pink-500 hover:from-pink-300 hover:to-pink-400 text-white font-bold py-4 px-4 rounded-2xl text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale shadow-pink-300 group select-none">
                 <i class="fa-solid fa-flag group-hover:scale-110 transition-transform"></i>
                 Marcar
             </button>
@@ -177,17 +144,15 @@
         </button>
 
         <!-- Histórico -->
-        <div class="mt-1">
+        <div class="mt-1 flex-1 overflow-hidden flex flex-col">
             <div class="flex justify-between items-center mb-3 px-2">
                 <h2 class="text-lg font-bold text-purple-700">📜 Linha do Tempo</h2>
-                <div class="flex items-center gap-3">
-                    <button onclick="clearHistory()" class="text-xs text-red-300 hover:text-red-500 font-bold transition-colors">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
+                <button onclick="clearHistory()" class="text-xs text-red-300 hover:text-red-500 font-bold transition-colors">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </div>
             
-            <div id="historyList" class="space-y-3 max-h-52 overflow-y-auto pr-1 pb-2">
+            <div id="historyList" class="space-y-3 overflow-y-auto pr-1 pb-2 flex-1 scroll-smooth">
                 <div id="emptyState" class="text-center py-4 opacity-50">
                     <p class="text-3xl mb-1">⏱️</p>
                     <p class="text-xs text-purple-400 font-semibold">Inicie a sessão...</p>
@@ -196,14 +161,62 @@
         </div>
     </div>
 
+    <!-- Aviso de Instalação (opcional) -->
+    <div id="installPrompt" class="hidden fixed bottom-4 left-4 right-4 bg-white p-4 rounded-2xl shadow-2xl border-2 border-purple-200 z-50 flex justify-between items-center animate-pop">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">📱</span>
+            <div class="text-sm">
+                <p class="font-bold text-purple-700">Instalar App?</p>
+                <p class="text-purple-400">Tenha foco kawaii na tela inicial!</p>
+            </div>
+        </div>
+        <button onclick="installPWA()" class="bg-purple-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-purple-600">Instalar</button>
+        <button onclick="closeInstall()" class="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-6 h-6 flex items-center justify-center border border-red-200 font-bold text-xs">✕</button>
+    </div>
+
     <script>
-        // Variáveis
-        let startTime = 0;      // Início da SESSÃO TOTAL (não zera nos laps)
-        let elapsedTime = 0;    // Pausas da sessão total
+        // --- LÓGICA DO PWA (SERVICE WORKER) ---
+        let deferredPrompt;
+        const installPromptDiv = document.getElementById('installPrompt');
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado!', reg))
+                    .catch(err => console.log('SW falhou:', err));
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Mostrar botão de instalação
+            installPromptDiv.classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou instalar');
+                    }
+                    deferredPrompt = null;
+                    installPromptDiv.classList.add('hidden');
+                });
+            }
+        }
+        
+        function closeInstall() {
+            installPromptDiv.classList.add('hidden');
+        }
+
+        // --- LÓGICA ORIGINAL DO TIMER ---
+        let startTime = 0;
+        let elapsedTime = 0;
         let timerInterval;
         let isRunning = false;
-        
-        let lastCheckpoint = 0; // Marca quando a última tarefa terminou (em ms do timer)
+        let lastCheckpoint = 0;
 
         const display = document.getElementById('timerDisplay');
         const startBtn = document.getElementById('startBtn');
@@ -225,7 +238,6 @@
             return `${hours}:${minutes}:${seconds}`;
         }
 
-        // Função para os botões de Tags
         function setTag(tag) {
             taskInput.value = tag;
             taskInput.classList.add('ring-2', 'ring-purple-400');
@@ -245,11 +257,9 @@
 
         function toggleTimer() {
             if (isRunning) {
-                // PAUSE
                 clearInterval(timerInterval);
                 elapsedTime += Date.now() - startTime;
                 isRunning = false;
-                
                 startBtn.classList.replace('from-pink-400', 'from-purple-400');
                 startBtn.classList.replace('to-pink-500', 'to-purple-500');
                 startBtnText.textContent = "Continuar";
@@ -257,21 +267,16 @@
                 statusText.textContent = "Pausado ⏸️";
                 display.classList.remove('text-pink-500');
                 display.classList.add('text-purple-500');
-
             } else {
-                // START / RESUME
                 startTime = Date.now();
                 timerInterval = setInterval(updateDisplay, 100);
                 isRunning = true;
-
                 startBtn.classList.replace('from-purple-400', 'from-pink-400');
                 startBtn.classList.replace('to-purple-500', 'to-pink-500');
                 startBtnText.textContent = "Pausar";
                 startBtnIcon.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                
                 nextBtn.disabled = false;
                 nextBtn.classList.remove('grayscale');
-                
                 statusText.textContent = "Sessão Rodando... ⏳";
                 display.classList.remove('text-purple-500');
                 display.classList.add('text-pink-500');
@@ -279,7 +284,6 @@
         }
 
         function nextTask() {
-            // Permite marcar mesmo pausado, se houver tempo corrido
             const currentTotal = getCurrentTotalTime();
             if (currentTotal === 0) return;
 
@@ -299,15 +303,11 @@
             addTaskToDOM(task);
             createConfetti();
 
-            // Atualiza o checkpoint para o tempo atual
             lastCheckpoint = currentTotal;
-
-            // Feedback visual SEM resetar o timer
             const panel = document.getElementById('mainPanel');
             panel.classList.add('ring-4', 'ring-pink-200');
             setTimeout(() => panel.classList.remove('ring-4', 'ring-pink-200'), 200);
 
-            // Limpa o input para a próxima marcação
             taskInput.value = "";
             taskInput.placeholder = "✨ O que vem agora?";
         }
@@ -317,14 +317,12 @@
             isRunning = false;
             elapsedTime = 0;
             startTime = 0;
-            lastCheckpoint = 0; // Reinicia os checkpoints
+            lastCheckpoint = 0;
             display.textContent = "00:00:00";
-            
             startBtnText.textContent = "Iniciar";
             startBtnIcon.innerHTML = '<i class="fa-solid fa-play"></i>';
             startBtn.classList.replace('from-pink-400', 'from-purple-400');
             startBtn.classList.replace('to-pink-500', 'to-purple-500');
-            
             nextBtn.disabled = true;
             nextBtn.classList.add('grayscale');
             statusText.textContent = "Aguardando início";
@@ -332,8 +330,6 @@
             display.classList.add('text-purple-500');
             taskInput.value = "";
         }
-
-        // --- Histórico ---
 
         function getHistory() {
             const h = localStorage.getItem('kawaiiContinuousHistory');
@@ -350,7 +346,6 @@
             const h = getHistory();
             if (h.length > 0) {
                 emptyState.style.display = 'none';
-                // Inverter ordem: mais recente no topo
                 h.forEach(task => addTaskToDOM(task)); 
             }
         }
@@ -366,18 +361,14 @@
 
         function addTaskToDOM(task) {
             emptyState.style.display = 'none';
-            
             const div = document.createElement('div');
             div.className = "bg-white p-3 rounded-2xl shadow-sm border border-purple-100 flex justify-between items-center animate-pop";
-            
             const emojis = ['🍇', '🦄', '🎀', '🧁', '👾', '💅', '🍬', '🎮', '📚'];
             const emoji = emojis[task.id % emojis.length];
 
             div.innerHTML = `
                 <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="bg-purple-50 text-base w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-purple-100">
-                        ${emoji}
-                    </div>
+                    <div class="bg-purple-50 text-base w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-purple-100">${emoji}</div>
                     <div class="min-w-0">
                         <p class="font-bold text-purple-700 truncate text-sm leading-tight">${task.name}</p>
                         <div class="flex items-center gap-1 text-[10px] text-purple-400 font-mono mt-0.5">
@@ -392,7 +383,6 @@
                     <span class="block font-bold text-purple-600 font-mono text-sm leading-none">${task.formattedDuration}</span>
                 </div>
             `;
-            
             historyList.insertBefore(div, historyList.firstChild);
         }
 
@@ -405,16 +395,13 @@
                     backgroundColor: colors[Math.floor(Math.random() * colors.length)],
                     borderRadius: '50%', zIndex: '9999', pointerEvents: 'none'
                 });
-                
                 const angle = Math.random() * Math.PI * 2;
                 const tx = Math.cos(angle) * 120 * (Math.random() + 0.5);
                 const ty = Math.sin(angle) * 120 * (Math.random() + 0.5);
-                
                 confetto.animate([
                     { transform: 'translate(0, 0) scale(1)', opacity: 1 },
                     { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
                 ], { duration: 800, easing: 'cubic-bezier(0, .9, .57, 1)' }).onfinish = () => confetto.remove();
-                
                 document.body.appendChild(confetto);
             }
         }
