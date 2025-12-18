@@ -123,13 +123,13 @@
                 <i class="fa-solid fa-stopwatch animate-bounce-slow text-purple-400"></i>
                 Kawaii Focus
             </h1>
-            <p class="text-purple-400 text-sm font-semibold mt-1">Fluxo Contínuo ✨</p>
+            <p class="text-purple-400 text-sm font-semibold mt-1">Sessão Contínua ✨</p>
         </header>
 
         <!-- Área do Timer -->
         <div class="bg-white rounded-3xl p-5 shadow-inner border-4 border-purple-100 flex flex-col items-center gap-3 relative">
             
-            <!-- Tags Predefinidas (NOVO) -->
+            <!-- Tags Predefinidas -->
             <div class="flex flex-wrap justify-center gap-2 w-full mb-1">
                 <button onclick="setTag('📚 Estudo')" class="chip-btn px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-600 text-xs font-bold rounded-xl border border-purple-200">📚 Estudo</button>
                 <button onclick="setTag('💼 Trabalho')" class="chip-btn px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs font-bold rounded-xl border border-blue-200">💼 Trabalho</button>
@@ -164,24 +164,23 @@
                 <span id="startBtnText">Iniciar</span>
             </button>
 
-            <!-- Botão Próximo (Speed Chess) -->
+            <!-- Botão Marcar/Próximo -->
             <button id="nextBtn" onclick="nextTask()" disabled
                 class="btn-kawaii col-span-1 bg-gradient-to-b from-pink-400 to-pink-500 hover:from-pink-300 hover:to-pink-400 text-white font-bold py-4 px-4 rounded-2xl text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale shadow-pink-300 group">
-                <i class="fa-solid fa-forward group-hover:translate-x-1 transition-transform"></i>
-                Próximo!
+                <i class="fa-solid fa-flag group-hover:scale-110 transition-transform"></i>
+                Marcar
             </button>
         </div>
 
         <button onclick="resetTimer()" class="text-xs text-purple-300 font-bold hover:text-purple-500 underline transition-colors mx-auto">
-            Resetar tudo
+            Zerar Cronômetro Total
         </button>
 
         <!-- Histórico -->
         <div class="mt-1">
             <div class="flex justify-between items-center mb-3 px-2">
-                <h2 class="text-lg font-bold text-purple-700">📜 Hoje</h2>
+                <h2 class="text-lg font-bold text-purple-700">📜 Linha do Tempo</h2>
                 <div class="flex items-center gap-3">
-                    <span id="sessionTotal" class="text-xs font-mono font-bold bg-purple-200 text-purple-700 px-2 py-1 rounded-md hidden">Total: 00:00:00</span>
                     <button onclick="clearHistory()" class="text-xs text-red-300 hover:text-red-500 font-bold transition-colors">
                         <i class="fa-solid fa-trash"></i>
                     </button>
@@ -190,8 +189,8 @@
             
             <div id="historyList" class="space-y-3 max-h-52 overflow-y-auto pr-1 pb-2">
                 <div id="emptyState" class="text-center py-4 opacity-50">
-                    <p class="text-3xl mb-1">💤</p>
-                    <p class="text-xs text-purple-400 font-semibold">Sem atividades...</p>
+                    <p class="text-3xl mb-1">⏱️</p>
+                    <p class="text-xs text-purple-400 font-semibold">Inicie a sessão...</p>
                 </div>
             </div>
         </div>
@@ -199,11 +198,13 @@
 
     <script>
         // Variáveis
-        let startTime = 0;      // Inicio da TAREFA atual
-        let elapsedTime = 0;    // Acumulado de pauses (se houver) da TAREFA atual
+        let startTime = 0;      // Início da SESSÃO TOTAL (não zera nos laps)
+        let elapsedTime = 0;    // Pausas da sessão total
         let timerInterval;
         let isRunning = false;
         
+        let lastCheckpoint = 0; // Marca quando a última tarefa terminou (em ms do timer)
+
         const display = document.getElementById('timerDisplay');
         const startBtn = document.getElementById('startBtn');
         const startBtnText = document.getElementById('startBtnText');
@@ -213,38 +214,33 @@
         const statusText = document.getElementById('statusText');
         const historyList = document.getElementById('historyList');
         const emptyState = document.getElementById('emptyState');
-        const sessionTotalDisplay = document.getElementById('sessionTotal');
 
         document.addEventListener('DOMContentLoaded', loadHistory);
 
         function formatTime(ms) {
-            const date = new Date(ms);
-            const hours = String(Math.floor(ms / (1000 * 60 * 60))).padStart(2, '0');
-            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
             return `${hours}:${minutes}:${seconds}`;
-        }
-
-        function formatClock(date) {
-            return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
 
         // Função para os botões de Tags
         function setTag(tag) {
             taskInput.value = tag;
-            // Efeito visual no input
             taskInput.classList.add('ring-2', 'ring-purple-400');
             setTimeout(() => taskInput.classList.remove('ring-2', 'ring-purple-400'), 300);
-            
-            // Se o timer já estiver rodando, o usuário provavelmente quer mudar a tag para a PRÓXIMA task
-            // ou corrigir a atual. Mantemos o foco no timer.
+        }
+
+        function getCurrentTotalTime() {
+            if (!startTime) return 0;
+            const now = Date.now();
+            return isRunning ? (now - startTime) + elapsedTime : elapsedTime;
         }
 
         function updateDisplay() {
             if (!isRunning) return;
-            const now = Date.now();
-            const time = (now - startTime) + elapsedTime;
-            display.textContent = formatTime(time);
+            display.textContent = formatTime(getCurrentTotalTime());
         }
 
         function toggleTimer() {
@@ -276,28 +272,25 @@
                 nextBtn.disabled = false;
                 nextBtn.classList.remove('grayscale');
                 
-                statusText.textContent = "Contando... ⏳";
+                statusText.textContent = "Sessão Rodando... ⏳";
                 display.classList.remove('text-purple-500');
                 display.classList.add('text-pink-500');
             }
         }
 
         function nextTask() {
-            if (!isRunning && elapsedTime === 0) return;
+            // Permite marcar mesmo pausado, se houver tempo corrido
+            const currentTotal = getCurrentTotalTime();
+            if (currentTotal === 0) return;
 
-            const now = Date.now();
-            // Calcular tempo da tarefa que acabou de encerrar
-            const duration = isRunning ? (now - startTime) + elapsedTime : elapsedTime;
-
-            // Se for um clique acidental muito rápido (< 1 seg), ignorar ou avisar? 
-            // Vamos deixar passar por enquanto.
-
-            let name = taskInput.value.trim() || "Atividade rápida";
+            let name = taskInput.value.trim() || "Atividade Geral";
+            const duration = currentTotal - lastCheckpoint;
 
             const task = {
                 id: Date.now(),
                 name: name,
-                endClock: formatClock(new Date()),
+                sessionStart: formatTime(lastCheckpoint),
+                sessionEnd: formatTime(currentTotal),
                 duration: duration,
                 formattedDuration: formatTime(duration)
             };
@@ -306,24 +299,17 @@
             addTaskToDOM(task);
             createConfetti();
 
-            // Lógica do FLUXO CONTÍNUO (Lap)
-            if (isRunning) {
-                // Reseta instantaneamente para a próxima
-                startTime = now;
-                elapsedTime = 0;
-                display.textContent = "00:00:00";
-                
-                // Feedback visual de "Troca"
-                const panel = document.getElementById('mainPanel');
-                panel.classList.add('ring-4', 'ring-pink-200');
-                setTimeout(() => panel.classList.remove('ring-4', 'ring-pink-200'), 200);
+            // Atualiza o checkpoint para o tempo atual
+            lastCheckpoint = currentTotal;
 
-                // Limpa o input para a nova tarefa, mas mantém o timer rodando
-                taskInput.value = "";
-                taskInput.placeholder = "✨ O que vem agora?";
-            } else {
-                resetTimer();
-            }
+            // Feedback visual SEM resetar o timer
+            const panel = document.getElementById('mainPanel');
+            panel.classList.add('ring-4', 'ring-pink-200');
+            setTimeout(() => panel.classList.remove('ring-4', 'ring-pink-200'), 200);
+
+            // Limpa o input para a próxima marcação
+            taskInput.value = "";
+            taskInput.placeholder = "✨ O que vem agora?";
         }
 
         function resetTimer() {
@@ -331,6 +317,7 @@
             isRunning = false;
             elapsedTime = 0;
             startTime = 0;
+            lastCheckpoint = 0; // Reinicia os checkpoints
             display.textContent = "00:00:00";
             
             startBtnText.textContent = "Iniciar";
@@ -349,34 +336,31 @@
         // --- Histórico ---
 
         function getHistory() {
-            const h = localStorage.getItem('kawaiiFlowHistory');
+            const h = localStorage.getItem('kawaiiContinuousHistory');
             return h ? JSON.parse(h) : [];
         }
 
         function saveTask(task) {
             const h = getHistory();
             h.push(task);
-            localStorage.setItem('kawaiiFlowHistory', JSON.stringify(h));
-            updateSessionTotal();
+            localStorage.setItem('kawaiiContinuousHistory', JSON.stringify(h));
         }
 
         function loadHistory() {
             const h = getHistory();
             if (h.length > 0) {
                 emptyState.style.display = 'none';
-                // Inverter ordem para mostrar mais recente primeiro
+                // Inverter ordem: mais recente no topo
                 h.forEach(task => addTaskToDOM(task)); 
-                updateSessionTotal();
             }
         }
 
         function clearHistory() {
-            if(confirm("Apagar histórico de hoje?")) {
-                localStorage.removeItem('kawaiiFlowHistory');
+            if(confirm("Apagar todo o histórico?")) {
+                localStorage.removeItem('kawaiiContinuousHistory');
                 historyList.innerHTML = '';
                 historyList.appendChild(emptyState);
                 emptyState.style.display = 'block';
-                sessionTotalDisplay.classList.add('hidden');
             }
         }
 
@@ -396,23 +380,20 @@
                     </div>
                     <div class="min-w-0">
                         <p class="font-bold text-purple-700 truncate text-sm leading-tight">${task.name}</p>
-                        <p class="text-[10px] text-purple-400 font-mono">Terminou às ${task.endClock}</p>
+                        <div class="flex items-center gap-1 text-[10px] text-purple-400 font-mono mt-0.5">
+                            <span class="bg-purple-100 px-1.5 rounded text-purple-600">${task.sessionStart}</span>
+                            <i class="fa-solid fa-arrow-right text-[8px] opacity-50"></i>
+                            <span class="bg-purple-100 px-1.5 rounded text-purple-600">${task.sessionEnd}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="text-right shrink-0 bg-purple-50 px-2 py-1 rounded-lg">
+                <div class="text-right shrink-0">
+                     <span class="block text-[10px] uppercase font-bold text-purple-300">Duração</span>
                     <span class="block font-bold text-purple-600 font-mono text-sm leading-none">${task.formattedDuration}</span>
                 </div>
             `;
             
             historyList.insertBefore(div, historyList.firstChild);
-        }
-
-        function updateSessionTotal() {
-            const h = getHistory();
-            if (h.length === 0) return;
-            const total = h.reduce((acc, cur) => acc + cur.duration, 0);
-            sessionTotalDisplay.textContent = "Total: " + formatTime(total);
-            sessionTotalDisplay.classList.remove('hidden');
         }
 
         function createConfetti() {
