@@ -10,11 +10,20 @@ const ASSETS = [
 
 // Instalação do Service Worker
 self.addEventListener('install', (e) => {
+  // Força o SW a ativar imediatamente, sem esperar o usuário fechar a aba
+  self.skipWaiting();
+  
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
     })
   );
+});
+
+// Ativação
+self.addEventListener('activate', (e) => {
+  // Assume o controle de todas as páginas abertas imediatamente
+  e.waitUntil(self.clients.claim());
 });
 
 // Busca de arquivos (Cache First)
