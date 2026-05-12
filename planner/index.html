@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Agenda Organizadora</title>
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/2563eb/white?text=A">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .drag-over { background-color: rgba(59, 130, 246, 0.1); border: 2px dashed #3b82f6; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .task-done { text-decoration: line-through; opacity: 0.6; }
+        .ghost { opacity: 0.4; }
+        .timer-running { animation: pulse-border 2s infinite; border-color: #ef4444 !important; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Minha Agenda</h1>
+                <p class="text-slate-500">Organize seu dia com arrastar e soltar.</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+                <input type="text" id="taskInput" placeholder="Nova tarefa..." class="px-4 py-2 outline-none w-full md:w-64 bg-transparent">
+                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <aside class="lg:col-span-4 space-y-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Tarefas Pendentes
+                    </h2>
+                    <div id="inbox" class="space-y-3 min-h-[200px]" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <!-- Tasks go here -->
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                    <h3 class="font-semibold text-blue-800 mb-2">Dica de Produtividade</h3>
+                    <p class="text-sm text-blue-600 leading-relaxed">Arraste as tarefas da lista lateral para os horários específicos do seu quadro para bloquear seu tempo!</p>
+                </div>
+            </aside>
+
+            <main class="lg:col-span-8">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Quadro Horário
+                        </h2>
+                    </div>
+                    <div class="custom-scrollbar max-h-[600px] overflow-y-auto">
+                        <div id="timeGrid">
+                            <!-- Time slots generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Notification system (alternative to alert) -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-50">
+        Mensagem aqui
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('my_agenda_tasks')) || [];
+        const hours = Array.from({ length: 16 }, (_, i) => i + 7); 
+        let activeTimers = {};
+
+        window.onload = () => {
+            renderTimeGrid();
+            renderTasks();
+            startGlobalTicker();
+            registerServiceWorker();
+        };
+
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(reg => console.log('App pronto para uso offline!', reg))
+                        .catch(err => console.log('Erro ao registrar PWA:', err));
+                });
+            }
+        }
+
+        function renderTimeGrid() {
+            const grid = document.getElementById('timeGrid');
+            grid.innerHTML = '';
+            
+            hours.forEach(hour => {
+                const row = document.createElement('div');
+                row.className = 'flex border-b border-slate-100 group min-h-[80px]';
+                row.innerHTML = `
+                    <div class="w-20 p-4 text-xs font-bold text-slate-400 border-r border-slate-100 flex items-start justify-center">
+                        ${hour.toString().padStart(2, '0')}:00
+                    </div>
+                    <div id="slot-${hour}" 
+                         class="flex-1 p-2 gap-2 flex flex-wrap content-start transition-colors min-h-[80px]" 
+                         ondrop="drop(event)" 
+                         ondragover="allowDrop(event)" 
+                         ondragleave="dragLeave(event)">
+                    </div>
+                `;
+                grid.appendChild(row);
+            });
+        }
+
+        function renderTasks() {
+            // Limpa containers
+            document.getElementById('inbox').innerHTML = '';
+            hours.forEach(h => {
+                const slot = document.getElementById(`slot-${h}`);
+                if (slot) slot.innerHTML = '';
+            });
+
+            tasks.forEach(task => {
+                const el = createTaskElement(task);
+                if (task.slot === null || task.slot === undefined) {
+                    document.getElementById('inbox').appendChild(el);
+                } else {
+                    const slot = document.getElementById(`slot-${task.slot}`);
+                    if (slot) slot.appendChild(el);
+                }
+            });
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const newTask = {
+                id: 'task-' + Date.now(),
+                text: text,
+                done: false,
+                slot: null,
+                timerEnd: null
+            };
+
+            tasks.push(newTask);
+            save();
+            renderTasks();
+            input.value = '';
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+            save();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            save();
+            renderTasks();
+        }
+
+
+        // Som de alerta usando Tone.js
+        function playAlertSound() {
+            const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            const now = Tone.now();
+            synth.triggerAttackRelease("C5", "8n", now);
+            synth.triggerAttackRelease("E5", "8n", now + 0.1);
+            synth.triggerAttackRelease("G5", "4n", now + 0.2);
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-full shadow-2xl transition-all z-50 ${type === 'alert' ? 'bg-red-600' : 'bg-slate-900'}`;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 5000);
+        }
+
+        function startTimer(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            // Se já tiver um timer, cancela (clique duplo reseta)
+            if (task.timerEnd) {
+                if (!confirm("Deseja reiniciar o cronômetro de 45min?")) return;
+            }
+
+            const duration = 45 * 60 * 1000; // 45 minutos em ms
+            task.timerEnd = Date.now() + duration;
+            
+            save();
+            renderTasks();
+            showToast("Cronômetro de 45 min iniciado! Foco total!", "info");
+            
+            // Ativa o áudio no primeiro clique do usuário (necessário para navegadores)
+            Tone.start();
+        }
+
+        function startGlobalTicker() {
+            setInterval(() => {
+                let changed = false;
+                const now = Date.now();
+
+                tasks.forEach(task => {
+                    if (task.timerEnd && task.timerEnd > 0) {
+                        if (now >= task.timerEnd) {
+                            // Timer acabou!
+                            task.timerEnd = null;
+                            task.done = true; // Marca como feito automaticamente
+                            playAlertSound();
+                            showToast(`TEMPO ESGOTADO: ${task.text} finalizada!`, "alert");
+                            changed = true;
+                        } else {
+                            // Apenas atualiza o display a cada segundo
+                            updateTimerDisplay(task.id, task.timerEnd - now);
+                        }
+                    }
+                });
+
+                if (changed) {
+                    save();
+                    renderTasks();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(id, ms) {
+            const el = document.getElementById(`time-display-${id}`);
+            if (!el) return;
+            
+            const totalSeconds = Math.floor(ms / 1000);
+            const mins = Math.floor(totalSeconds / 60);
+            const secs = totalSeconds % 60;
+            el.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function createTaskElement(task) {
+            const div = document.createElement('div');
+            const isTimerRunning = task.timerEnd && task.timerEnd > Date.now();
+            
+            div.className = `bg-white border border-slate-200 p-3 rounded-xl shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md flex items-center justify-between group ${task.done ? 'task-done bg-slate-50' : ''} ${isTimerRunning ? 'timer-running' : ''}`;
+            div.draggable = true;
+            div.id = task.id;
+            div.ondragstart = drag;
+
+            const timeRemaining = isTimerRunning ? "" : "";
+
+            div.innerHTML = `
+                <div class="flex items-center gap-3 overflow-hidden flex-1">
+                    <input type="checkbox" ${task.done ? 'checked' : ''} 
+                           onchange="toggleTask('${task.id}')"
+                           class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="truncate font-medium text-sm text-slate-700">${task.text}</span>
+                        <span id="time-display-${task.id}" class="text-[10px] font-bold text-red-500 uppercase tracking-wider">
+                            ${isTimerRunning ? 'Iniciando...' : ''}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="startTimer('${task.id}')" title="Iniciar 45min de foco" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </button>
+                    <button onclick="deleteTask('${task.id}')" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-red-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(ev) {
+            ev.currentTarget.classList.remove('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("taskId", ev.target.id);
+            ev.target.classList.add('ghost');
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const targetSlot = ev.currentTarget;
+            targetSlot.classList.remove('drag-over');
+            
+            const taskId = ev.dataTransfer.getData("taskId");
+            const taskEl = document.getElementById(taskId);
+            taskEl.classList.remove('ghost');
+
+            let newSlot = null;
+            if (targetSlot.id.startsWith('slot-')) {
+                newSlot = parseInt(targetSlot.id.replace('slot-', ''));
+            }
+
+            // Update state
+            tasks = tasks.map(t => t.id === taskId ? { ...t, slot: newSlot } : t);
+            save();
+            renderTasks();
+        }
+
+        // Listen for Enter key on input
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+    </script>
+</body>
+</html>
