@@ -2,7 +2,7 @@
 "name": "Agenda de Estudos Produtiva",
 "short_name": "Minha Agenda",
 "description": "Agenda com foco de 45 minutos e quadro horário arrastável.",
-"start_url": "./agenda.html",
+"start_url": "./index.html",
 "display": "standalone",
 "background_color": "#f8fafc",
 "theme_color": "#2563eb",
