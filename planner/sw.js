@@ -1,6 +1,6 @@
 const CACHE_NAME = 'agenda-v1';
 const ASSETS = [
-  './agenda.html',
+  './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js'
