@@ -1,94 +1,140 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda Organizadora</title>
-    <meta name="theme-color" content="#2563eb">
+    <title>O Meu Planeador de Foco</title>
+    <meta name="theme-color" content="#7e22ce">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/2563eb/white?text=A">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/7e22ce/white?text=P">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandPurple: '#7e22ce',
+                        accentFuchsia: '#d946ef',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .drag-over { background-color: rgba(59, 130, 246, 0.1); border: 2px dashed #3b82f6; }
+        body { font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
+        .drag-over { background-color: rgba(126, 34, 206, 0.1); border: 2px dashed #7e22ce; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #7e22ce; border-radius: 10px; }
         .task-done { text-decoration: line-through; opacity: 0.6; }
         .ghost { opacity: 0.4; }
-        .timer-running { animation: pulse-border 2s infinite; border-color: #ef4444 !important; }
+        .timer-running { animation: pulse-border 2s infinite; border-color: #d946ef !important; }
+        
         @keyframes pulse-border {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(217, 70, 239, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
         }
+
+        /* Estilo para o modo Mini */
+        body.mini-mode { background: #fff; overflow: hidden; }
+        body.mini-mode .main-content { display: none; }
+        body.mini-mode #miniDisplay { display: flex !important; }
+
+        /* Sobreposição do cronómetro gigante */
+        #fullscreenTimer { display: none; }
+        #fullscreenTimer.active { display: flex; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
+    <!-- Modo Mini (Visível apenas quando ativado) -->
+    <div id="miniDisplay" class="hidden fixed inset-0 bg-white flex-col items-center justify-center p-2 text-center">
+        <div id="miniTaskName" class="text-xs font-bold text-purple-700 truncate w-full mb-1">Sem tarefa ativa</div>
+        <div id="miniClock" class="text-4xl font-black text-fuchsia-600 tracking-tighter">00:00</div>
+        <button onclick="toggleMiniMode()" class="mt-2 text-[10px] bg-purple-50 text-purple-700 px-2 py-1 rounded-lg border border-purple-100 font-bold uppercase">Sair do Modo Mini</button>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content max-w-6xl mx-auto p-4 md:p-8">
         <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Minha Agenda</h1>
-                <p class="text-slate-500">Organize seu dia com arrastar e soltar.</p>
+            <div class="flex items-center gap-4">
+                <div class="bg-purple-700 p-3 rounded-2xl shadow-lg shadow-purple-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-purple-900 tracking-tight uppercase">Planeador de Foco</h1>
+                    <p class="text-slate-500 text-sm">Organiza as tuas disciplinas e cumpre os prazos.</p>
+                </div>
             </div>
-            <div class="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
-                <input type="text" id="taskInput" placeholder="Nova tarefa..." class="px-4 py-2 outline-none w-full md:w-64 bg-transparent">
-                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Add
+            <div class="flex items-center gap-2">
+                <button onclick="toggleMiniMode()" class="bg-purple-100 hover:bg-purple-200 p-3 rounded-xl text-purple-700 transition-all border border-purple-200" title="Modo Mini (Janela Suspensa)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                 </button>
+                <div class="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 focus-within:border-purple-400 transition-colors">
+                    <input type="text" id="taskInput" placeholder="Ex: Estudar História..." class="px-4 py-2 outline-none w-full md:w-64 bg-transparent text-sm">
+                    <button onclick="addTask()" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl transition-all flex items-center gap-2 font-bold text-sm shadow-md shadow-purple-200">
+                        CRIAR
+                    </button>
+                </div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <aside class="lg:col-span-4 space-y-6">
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-purple-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         Tarefas Pendentes
                     </h2>
-                    <div id="inbox" class="space-y-3 min-h-[200px]" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                        <!-- Tasks go here -->
-                    </div>
+                    <div id="inbox" class="space-y-3 min-h-[200px]" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
                 </div>
-
-                <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
-                    <h3 class="font-semibold text-blue-800 mb-2">Dica de Produtividade</h3>
-                    <p class="text-sm text-blue-600 leading-relaxed">Arraste as tarefas da lista lateral para os horários específicos do seu quadro para bloquear seu tempo!</p>
+                
+                <div class="bg-purple-50 p-6 rounded-3xl border border-purple-100">
+                    <h3 class="font-bold text-purple-800 text-sm mb-1 uppercase tracking-wider">Dica de Foco</h3>
+                    <p class="text-xs text-purple-600 leading-relaxed">Usa o cronómetro de 45 minutos para entrar em estado de fluxo profundo. Evita distrações externas durante este período.</p>
                 </div>
             </aside>
 
             <main class="lg:col-span-8">
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-                        <h2 class="text-lg font-semibold flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            Quadro Horário
+                        <h2 class="text-lg font-bold flex items-center gap-2 text-purple-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Quadro de Horários
                         </h2>
                     </div>
                     <div class="custom-scrollbar max-h-[600px] overflow-y-auto">
-                        <div id="timeGrid">
-                            <!-- Time slots generated by JS -->
-                        </div>
+                        <div id="timeGrid"></div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Notification system (alternative to alert) -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl transition-all opacity-0 pointer-events-none z-50">
+    <!-- Overlay do Cronómetro Gigante -->
+    <div id="fullscreenTimer" class="fixed inset-0 bg-purple-900 text-white flex-col items-center justify-center z-[100] text-center p-8">
+        <h3 id="fsTaskName" class="text-2xl md:text-4xl font-light mb-6 opacity-70 uppercase tracking-[0.2em]">Foco em Curso</h3>
+        <div id="fsClock" class="text-[18vw] md:text-[22vw] font-black leading-none text-fuchsia-400 drop-shadow-2xl">45:00</div>
+        <div class="mt-16 flex gap-6">
+            <button onclick="closeFullscreen()" class="border-2 border-white/20 hover:bg-white/10 px-10 py-4 rounded-2xl font-bold transition-all uppercase tracking-widest text-sm">Minimizar</button>
+            <button onclick="stopActiveTimer()" class="bg-red-500 hover:bg-red-600 px-10 py-4 rounded-2xl font-bold transition-all uppercase tracking-widest text-sm shadow-xl shadow-red-900/40">Parar Foco</button>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl transition-all opacity-0 pointer-events-none z-[110] font-medium border border-white/10">
         Mensagem aqui
     </div>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('my_agenda_tasks')) || [];
+        let tasks = JSON.parse(localStorage.getItem('foco_planner_tasks')) || [];
         const hours = Array.from({ length: 16 }, (_, i) => i + 7); 
-        let activeTimers = {};
+        let currentActiveId = null;
 
         window.onload = () => {
             renderTimeGrid();
@@ -97,32 +143,30 @@
             registerServiceWorker();
         };
 
+        function save() {
+            localStorage.setItem('foco_planner_tasks', JSON.stringify(tasks));
+        }
+
         function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(reg => console.log('App pronto para uso offline!', reg))
-                        .catch(err => console.log('Erro ao registrar PWA:', err));
-                });
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA carregado com sucesso.'))
+                    .catch(err => console.log('Erro no PWA:', err));
             }
         }
 
         function renderTimeGrid() {
             const grid = document.getElementById('timeGrid');
             grid.innerHTML = '';
-            
             hours.forEach(hour => {
                 const row = document.createElement('div');
-                row.className = 'flex border-b border-slate-100 group min-h-[80px]';
+                row.className = 'flex border-b border-slate-100 group min-h-[85px]';
                 row.innerHTML = `
-                    <div class="w-20 p-4 text-xs font-bold text-slate-400 border-r border-slate-100 flex items-start justify-center">
+                    <div class="w-20 p-4 text-xs font-black text-slate-300 border-r border-slate-100 flex items-start justify-center uppercase">
                         ${hour.toString().padStart(2, '0')}:00
                     </div>
-                    <div id="slot-${hour}" 
-                         class="flex-1 p-2 gap-2 flex flex-wrap content-start transition-colors min-h-[80px]" 
-                         ondrop="drop(event)" 
-                         ondragover="allowDrop(event)" 
-                         ondragleave="dragLeave(event)">
+                    <div id="slot-${hour}" class="flex-1 p-3 gap-3 flex flex-wrap content-start transition-colors min-h-[85px]" 
+                         ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
                     </div>
                 `;
                 grid.appendChild(row);
@@ -130,7 +174,6 @@
         }
 
         function renderTasks() {
-            // Limpa containers
             document.getElementById('inbox').innerHTML = '';
             hours.forEach(h => {
                 const slot = document.getElementById(`slot-${h}`);
@@ -139,7 +182,7 @@
 
             tasks.forEach(task => {
                 const el = createTaskElement(task);
-                if (task.slot === null || task.slot === undefined) {
+                if (task.slot === null) {
                     document.getElementById('inbox').appendChild(el);
                 } else {
                     const slot = document.getElementById(`slot-${task.slot}`);
@@ -179,8 +222,6 @@
             renderTasks();
         }
 
-
-        // Som de alerta usando Tone.js
         function playAlertSound() {
             const synth = new Tone.PolySynth(Tone.Synth).toDestination();
             const now = Tone.now();
@@ -192,31 +233,46 @@
         function showToast(msg, type = 'info') {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
-            toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-full shadow-2xl transition-all z-50 ${type === 'alert' ? 'bg-red-600' : 'bg-slate-900'}`;
+            toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 text-white px-8 py-4 rounded-2xl shadow-2xl transition-all z-[110] ${type === 'alert' ? 'bg-fuchsia-600' : 'bg-purple-900'}`;
             toast.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 5000);
+            setTimeout(() => toast.classList.add('opacity-0', 'pointer-events-none'), 5000);
         }
 
         function startTimer(taskId) {
             const task = tasks.find(t => t.id === taskId);
             if (!task) return;
 
-            // Se já tiver um timer, cancela (clique duplo reseta)
-            if (task.timerEnd) {
-                if (!confirm("Deseja reiniciar o cronômetro de 45min?")) return;
-            }
-
-            const duration = 45 * 60 * 1000; // 45 minutos em ms
+            const duration = 45 * 60 * 1000;
             task.timerEnd = Date.now() + duration;
+            currentActiveId = taskId;
             
             save();
             renderTasks();
-            showToast("Cronômetro de 45 min iniciado! Foco total!", "info");
-            
-            // Ativa o áudio no primeiro clique do usuário (necessário para navegadores)
+            openFullscreen(task.text);
             Tone.start();
+        }
+
+        function stopActiveTimer() {
+            if (!currentActiveId) return;
+            const task = tasks.find(t => t.id === currentActiveId);
+            if (task) task.timerEnd = null;
+            currentActiveId = null;
+            save();
+            renderTasks();
+            closeFullscreen();
+        }
+
+        function openFullscreen(name) {
+            document.getElementById('fsTaskName').innerText = name;
+            document.getElementById('fullscreenTimer').classList.add('active');
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenTimer').classList.remove('active');
+        }
+
+        function toggleMiniMode() {
+            document.body.classList.toggle('mini-mode');
         }
 
         function startGlobalTicker() {
@@ -226,16 +282,16 @@
 
                 tasks.forEach(task => {
                     if (task.timerEnd && task.timerEnd > 0) {
-                        if (now >= task.timerEnd) {
-                            // Timer acabou!
+                        const remaining = task.timerEnd - now;
+                        if (remaining <= 0) {
                             task.timerEnd = null;
-                            task.done = true; // Marca como feito automaticamente
+                            task.done = true;
                             playAlertSound();
-                            showToast(`TEMPO ESGOTADO: ${task.text} finalizada!`, "alert");
+                            showToast(`TEMPO TERMINADO: ${task.text} concluída!`, "alert");
                             changed = true;
+                            if (currentActiveId === task.id) closeFullscreen();
                         } else {
-                            // Apenas atualiza o display a cada segundo
-                            updateTimerDisplay(task.id, task.timerEnd - now);
+                            updateTimerDisplays(task.id, task.text, remaining);
                         }
                     }
                 });
@@ -247,86 +303,78 @@
             }, 1000);
         }
 
-        function updateTimerDisplay(id, ms) {
-            const el = document.getElementById(`time-display-${id}`);
-            if (!el) return;
-            
-            const totalSeconds = Math.floor(ms / 1000);
+        function updateTimerDisplays(id, text, ms) {
+            const totalSeconds = Math.max(0, Math.floor(ms / 1000));
             const mins = Math.floor(totalSeconds / 60);
             const secs = totalSeconds % 60;
-            el.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+            const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            const el = document.getElementById(`time-display-${id}`);
+            if (el) el.innerText = timeStr;
+
+            if (currentActiveId === id) {
+                const fsClock = document.getElementById('fsClock');
+                if (fsClock) fsClock.innerText = timeStr;
+            }
+
+            const miniClock = document.getElementById('miniClock');
+            const miniTaskName = document.getElementById('miniTaskName');
+            if (document.body.classList.contains('mini-mode')) {
+                miniClock.innerText = timeStr;
+                miniTaskName.innerText = text;
+            }
         }
 
         function createTaskElement(task) {
             const div = document.createElement('div');
             const isTimerRunning = task.timerEnd && task.timerEnd > Date.now();
             
-            div.className = `bg-white border border-slate-200 p-3 rounded-xl shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md flex items-center justify-between group ${task.done ? 'task-done bg-slate-50' : ''} ${isTimerRunning ? 'timer-running' : ''}`;
+            div.className = `bg-white border border-slate-200 p-4 rounded-2xl shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-lg flex items-center justify-between group ${task.done ? 'task-done bg-slate-50' : ''} ${isTimerRunning ? 'timer-running' : ''}`;
             div.draggable = true;
             div.id = task.id;
             div.ondragstart = drag;
 
-            const timeRemaining = isTimerRunning ? "" : "";
-
             div.innerHTML = `
-                <div class="flex items-center gap-3 overflow-hidden flex-1">
-                    <input type="checkbox" ${task.done ? 'checked' : ''} 
-                           onchange="toggleTask('${task.id}')"
-                           class="w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                <div class="flex items-center gap-4 overflow-hidden flex-1">
+                    <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask('${task.id}')"
+                           class="w-5 h-5 rounded-lg border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer transition-colors">
                     <div class="flex flex-col overflow-hidden">
-                        <span class="truncate font-medium text-sm text-slate-700">${task.text}</span>
-                        <span id="time-display-${task.id}" class="text-[10px] font-bold text-red-500 uppercase tracking-wider">
-                            ${isTimerRunning ? 'Iniciando...' : ''}
+                        <span class="truncate font-bold text-sm text-slate-800">${task.text}</span>
+                        <span id="time-display-${task.id}" class="text-[11px] font-black text-fuchsia-500 uppercase tracking-wider h-4">
+                            ${isTimerRunning ? 'A calcular...' : ''}
                         </span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="startTimer('${task.id}')" title="Iniciar 45min de foco" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <div class="flex items-center gap-1">
+                    <button onclick="startTimer('${task.id}')" title="Foco de 45 min" class="p-2 rounded-xl hover:bg-fuchsia-50 text-slate-300 hover:text-fuchsia-500 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     </button>
-                    <button onclick="deleteTask('${task.id}')" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-red-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <button onclick="deleteTask('${task.id}')" class="p-2 rounded-xl hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
             `;
             return div;
         }
 
-        function allowDrop(ev) {
-            ev.preventDefault();
-            ev.currentTarget.classList.add('drag-over');
-        }
-
-        function dragLeave(ev) {
-            ev.currentTarget.classList.remove('drag-over');
-        }
-
-        function drag(ev) {
-            ev.dataTransfer.setData("taskId", ev.target.id);
-            ev.target.classList.add('ghost');
-        }
-
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        function drag(ev) { ev.dataTransfer.setData("taskId", ev.target.id); ev.target.classList.add('ghost'); }
         function drop(ev) {
             ev.preventDefault();
             const targetSlot = ev.currentTarget;
             targetSlot.classList.remove('drag-over');
-            
             const taskId = ev.dataTransfer.getData("taskId");
             const taskEl = document.getElementById(taskId);
+            if (!taskEl) return;
             taskEl.classList.remove('ghost');
-
             let newSlot = null;
-            if (targetSlot.id.startsWith('slot-')) {
-                newSlot = parseInt(targetSlot.id.replace('slot-', ''));
-            }
-
-            // Update state
+            if (targetSlot.id.startsWith('slot-')) newSlot = parseInt(targetSlot.id.replace('slot-', ''));
             tasks = tasks.map(t => t.id === taskId ? { ...t, slot: newSlot } : t);
             save();
             renderTasks();
         }
 
-        // Listen for Enter key on input
         document.getElementById('taskInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addTask();
         });
